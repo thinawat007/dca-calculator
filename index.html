@@ -1,0 +1,953 @@
+<title>DCA Portfolio Calculator</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: single-column, responsive, full-page calculator */
+:root {
+  --bg: #F5F7FA;
+  --surface: #FFFFFF;
+  --surface2: #EEF1F6;
+  --border: #DDE2EB;
+  --fg: #1B2333;
+  --fg2: #4A5568;
+  --fg3: #8896A8;
+  --accent: #2563EB;
+  --accent-light: #EEF3FF;
+  --green: #059669;
+  --green-light: #ECFDF5;
+  --red: #DC2626;
+  --red-light: #FEF2F2;
+  --amber: #D97706;
+  --amber-light: #FFFBEB;
+  --purple: #7C3AED;
+  --purple-light: #F5F3FF;
+
+  --sp500:  #2563EB; --sp500-bg:  #EEF3FF;
+  --nasdaq: #7C3AED; --nasdaq-bg: #F5F3FF;
+  --thai:   #059669; --thai-bg:   #ECFDF5;
+  --gold:   #D97706; --gold-bg:   #FFFBEB;
+  --crypto: #DC2626; --crypto-bg: #FEF2F2;
+
+  --radius: 14px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.05);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1520; --surface: #192030; --surface2: #232F42;
+    --border: #2A3850; --fg: #E6EDF8; --fg2: #8DAAC8; --fg3: #4E6480;
+    --accent: #4080FF; --accent-light: #19274A;
+    --green: #34D399; --green-light: #0B2A1E;
+    --red: #F87171; --red-light: #2A1010;
+    --amber: #FBB040; --amber-light: #2A1C00;
+    --purple: #A78BFA; --purple-light: #1E1540;
+    --sp500-bg: #19274A; --nasdaq-bg: #1E1540;
+    --thai-bg: #0B2A1E; --gold-bg: #2A1C00; --crypto-bg: #2A1010;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1520; --surface: #192030; --surface2: #232F42;
+  --border: #2A3850; --fg: #E6EDF8; --fg2: #8DAAC8; --fg3: #4E6480;
+  --accent: #4080FF; --accent-light: #19274A;
+  --green: #34D399; --green-light: #0B2A1E;
+  --red: #F87171; --red-light: #2A1010;
+  --amber: #FBB040; --amber-light: #2A1C00;
+  --purple: #A78BFA; --purple-light: #1E1540;
+  --sp500-bg: #19274A; --nasdaq-bg: #1E1540;
+  --thai-bg: #0B2A1E; --gold-bg: #2A1C00; --crypto-bg: #2A1010;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0; padding-inline: 16px; padding-block: 24px;
+  background: var(--bg); color: var(--fg);
+  font-family: 'Sarabun', 'Inter', system-ui, sans-serif;
+  font-size: 15px; line-height: 1.6;
+  max-width: 920px; margin-inline: auto;
+}
+
+/* HEADER */
+.page-header { text-align: center; margin-bottom: 28px; }
+.page-header h1 { font-size: 1.55rem; font-weight: 700; margin: 0 0 6px; text-wrap: balance; }
+.page-header p { color: var(--fg2); margin: 0; font-size: 0.88rem; }
+
+/* === HERO INPUT CARD === */
+.hero-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px 24px;
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+}
+.hero-label {
+  font-size: 0.72rem; font-weight: 700; color: var(--fg3);
+  text-transform: uppercase; letter-spacing: .06em; margin-bottom: 14px;
+}
+.inputs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: 0.78rem; font-weight: 600; color: var(--fg2); }
+.field-input-wrap { position: relative; }
+.field-prefix, .field-suffix {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  color: var(--fg3); font-weight: 600; font-size: 0.9rem;
+  pointer-events: none;
+}
+.field-prefix { left: 12px; }
+.field-suffix { right: 12px; }
+.field input[type="number"] {
+  width: 100%; border: 2px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--fg);
+  font-family: inherit; font-size: 1.15rem; font-weight: 700;
+  font-variant-numeric: tabular-nums; outline: none;
+  padding: 10px 12px; transition: border-color .15s;
+}
+.field input[type="number"].has-prefix { padding-left: 28px; }
+.field input[type="number"].has-suffix { padding-right: 34px; }
+.field input[type="number"]:focus { border-color: var(--accent); }
+.field-hint { font-size: 0.72rem; color: var(--fg3); }
+
+.quick-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.quick-btn {
+  padding: 7px 13px; border: 1.5px solid var(--border); border-radius: 99px;
+  background: var(--surface2); color: var(--fg2);
+  font-family: inherit; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: all .15s; white-space: nowrap;
+}
+.quick-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+.quick-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+
+/* === RESULT HERO === */
+.result-hero {
+  background: linear-gradient(135deg, var(--accent) 0%, #1d4ed8 100%);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  color: #fff;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+}
+.rh-item { }
+.rh-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; opacity: .7; margin-bottom: 4px; }
+.rh-val { font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.rh-sub { font-size: 0.75rem; opacity: .75; margin-top: 3px; }
+.rh-divider { width: 1px; background: rgba(255,255,255,.2); }
+@media (max-width: 500px) { .rh-divider { display: none; } }
+
+/* SLIDERS SECTION */
+.sliders-section {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px 24px;
+  box-shadow: var(--shadow); margin-bottom: 20px;
+}
+.section-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px;
+}
+.section-title { font-size: 0.72rem; font-weight: 700; color: var(--fg3); text-transform: uppercase; letter-spacing: .06em; margin: 0; }
+.total-badge {
+  font-size: 0.82rem; font-weight: 700; font-variant-numeric: tabular-nums;
+  padding: 3px 10px; border-radius: 99px;
+}
+.total-badge.ok    { background: var(--green-light); color: var(--green); }
+.total-badge.over  { background: var(--red-light);   color: var(--red); }
+.total-badge.under { background: var(--amber-light);  color: var(--amber); }
+
+.slider-row {
+  display: grid; grid-template-columns: 130px 1fr 64px 90px;
+  align-items: center; gap: 10px; margin-bottom: 12px;
+}
+@media (max-width: 540px) {
+  .slider-row { grid-template-columns: 1fr 56px 80px; grid-template-rows: auto auto; }
+  .slider-label { grid-column: 1; }
+  .slider-pct-input { grid-column: 2; }
+  .slider-amount { grid-column: 3; }
+  .slider-track-wrap { grid-column: 1 / -1; }
+}
+.slider-label { display: flex; align-items: center; gap: 7px; font-size: 0.88rem; font-weight: 600; }
+.dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.dot-sp500  { background: var(--sp500); }
+.dot-nasdaq { background: var(--nasdaq); }
+.dot-thai   { background: var(--thai); }
+.dot-gold   { background: var(--gold); }
+.dot-crypto { background: var(--crypto); }
+
+input[type="range"] {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 5px; border-radius: 99px; outline: none; cursor: pointer;
+}
+input[type="range"].sp500  { background: linear-gradient(to right, var(--sp500)  var(--pct,0%), var(--border) var(--pct,0%)); }
+input[type="range"].nasdaq { background: linear-gradient(to right, var(--nasdaq) var(--pct,0%), var(--border) var(--pct,0%)); }
+input[type="range"].thai   { background: linear-gradient(to right, var(--thai)   var(--pct,0%), var(--border) var(--pct,0%)); }
+input[type="range"].gold   { background: linear-gradient(to right, var(--gold)   var(--pct,0%), var(--border) var(--pct,0%)); }
+input[type="range"].crypto { background: linear-gradient(to right, var(--crypto) var(--pct,0%), var(--border) var(--pct,0%)); }
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 17px; height: 17px; border-radius: 50%;
+  background: var(--surface); border: 2.5px solid currentColor;
+  box-shadow: 0 1px 4px rgba(0,0,0,.18); cursor: grab;
+}
+input[type="range"].sp500::-webkit-slider-thumb  { border-color: var(--sp500); }
+input[type="range"].nasdaq::-webkit-slider-thumb { border-color: var(--nasdaq); }
+input[type="range"].thai::-webkit-slider-thumb   { border-color: var(--thai); }
+input[type="range"].gold::-webkit-slider-thumb   { border-color: var(--gold); }
+input[type="range"].crypto::-webkit-slider-thumb { border-color: var(--crypto); }
+
+.slider-pct-input {
+  width: 56px; padding: 5px 7px; border: 1.5px solid var(--border);
+  border-radius: 6px; background: var(--surface2); color: var(--fg);
+  font-family: inherit; font-size: 0.88rem; font-weight: 700;
+  text-align: center; font-variant-numeric: tabular-nums; outline: none;
+}
+.slider-pct-input:focus { border-color: var(--accent); }
+.slider-amount { text-align: right; font-size: 0.88rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--fg2); white-space: nowrap; }
+.reset-btn {
+  display: block; margin: 6px auto 0; padding: 5px 14px;
+  border: 1.5px solid var(--border); border-radius: 99px;
+  background: none; color: var(--fg3); font-family: inherit; font-size: 0.78rem;
+  cursor: pointer; transition: all .15s;
+}
+.reset-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* DONUT + BREAKDOWN */
+.visual-row {
+  display: grid; grid-template-columns: 200px 1fr;
+  gap: 20px; margin-bottom: 20px; align-items: start;
+}
+@media (max-width: 580px) { .visual-row { grid-template-columns: 1fr; } }
+.donut-wrap {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 18px;
+  box-shadow: var(--shadow); display: flex; flex-direction: column; align-items: center; gap: 10px;
+}
+.breakdown-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow);
+}
+.asset-block {
+  border-radius: 7px; padding: 10px 12px; margin-bottom: 8px;
+  display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: start;
+}
+.asset-block:last-child { margin-bottom: 0; }
+.asset-block.sp500  { background: var(--sp500-bg);  border-left: 3px solid var(--sp500); }
+.asset-block.nasdaq { background: var(--nasdaq-bg); border-left: 3px solid var(--nasdaq); }
+.asset-block.thai   { background: var(--thai-bg);   border-left: 3px solid var(--thai); }
+.asset-block.gold   { background: var(--gold-bg);   border-left: 3px solid var(--gold); }
+.asset-block.crypto { background: var(--crypto-bg); border-left: 3px solid var(--crypto); }
+.asset-name { font-weight: 700; font-size: 0.88rem; }
+.asset-desc { font-size: 0.75rem; color: var(--fg3); grid-column: 1; }
+.asset-amount {
+  font-size: 1.05rem; font-weight: 700; font-variant-numeric: tabular-nums;
+  text-align: right; grid-row: 1/3; grid-column: 2; align-self: center;
+}
+.asset-amount.sp500  { color: var(--sp500); }
+.asset-amount.nasdaq { color: var(--nasdaq); }
+.asset-amount.thai   { color: var(--thai); }
+.asset-amount.gold   { color: var(--gold); }
+.asset-amount.crypto { color: var(--crypto); }
+
+/* SCENARIOS */
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 22px 24px;
+  box-shadow: var(--shadow); margin-bottom: 20px;
+}
+.proj-scenarios {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(130px,1fr));
+  gap: 10px; margin-bottom: 18px;
+}
+.scenario-tile { border-radius: var(--radius-sm); padding: 14px; text-align: center; border: 1.5px solid var(--border); }
+.scenario-tile.pessimist { border-color: var(--red);   background: var(--red-light); }
+.scenario-tile.base      { border-color: var(--accent); background: var(--accent-light); }
+.scenario-tile.optimist  { border-color: var(--green); background: var(--green-light); }
+.scenario-label { font-size: 0.68rem; color: var(--fg3); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 3px; }
+.scenario-rate  { font-size: 0.82rem; font-weight: 600; color: var(--fg2); margin-bottom: 5px; }
+.scenario-val   { font-size: 1.1rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.scenario-tile.pessimist .scenario-val { color: var(--red); }
+.scenario-tile.base      .scenario-val { color: var(--accent); }
+.scenario-tile.optimist  .scenario-val { color: var(--green); }
+.scenario-note { font-size: 0.7rem; color: var(--fg3); margin-top: 4px; }
+
+/* CHART */
+.chart-area { width: 100%; overflow-x: auto; }
+svg.proj-chart { display: block; font-family: 'Sarabun', sans-serif; }
+.chart-tooltip {
+  position: fixed; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 14px; font-size: 0.8rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,.14); pointer-events: none;
+  opacity: 0; transition: opacity .1s; z-index: 100; max-width: 220px;
+}
+.chart-tooltip.visible { opacity: 1; }
+.tt-year { font-weight: 700; color: var(--fg); margin-bottom: 6px; }
+.tt-row  { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-bottom: 2px; }
+.tt-label { color: var(--fg2); }
+.tt-val   { font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* YEAR TABLE */
+.yt-controls {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;
+}
+.yt-label { font-size: 0.82rem; color: var(--fg2); font-weight: 600; }
+.yt-range-wrap { display: flex; align-items: center; gap: 8px; }
+#ytYears { width: 160px; }
+#ytYearsVal { font-weight: 700; font-size: 0.88rem; color: var(--accent); font-variant-numeric: tabular-nums; min-width: 38px; }
+.yt-age-badge {
+  font-size: 0.78rem; color: var(--fg3); background: var(--surface2);
+  border-radius: 99px; padding: 3px 10px; border: 1px solid var(--border);
+}
+.yt-table-wrap { overflow-x: auto; }
+table.yt-table {
+  width: 100%; border-collapse: collapse; font-size: 0.8rem;
+  font-variant-numeric: tabular-nums; min-width: 520px;
+}
+table.yt-table th {
+  text-align: right; padding: 8px 10px; font-size: 0.68rem; font-weight: 700;
+  color: var(--fg3); text-transform: uppercase; letter-spacing: .05em;
+  border-bottom: 2px solid var(--border); white-space: nowrap;
+}
+table.yt-table th:first-child { text-align: left; }
+table.yt-table td {
+  padding: 8px 10px; text-align: right; border-bottom: 1px solid var(--border);
+  color: var(--fg2); white-space: nowrap;
+}
+table.yt-table td:first-child { text-align: left; font-weight: 600; color: var(--fg); }
+table.yt-table tr:last-child td { border-bottom: none; font-weight: 700; }
+table.yt-table tr.hl-row td { background: var(--accent-light); color: var(--accent); font-weight: 700; }
+table.yt-table tr.hl-row td:first-child { color: var(--accent); }
+.col-bad  { color: var(--red)   !important; }
+.col-base { color: var(--accent) !important; }
+.col-good { color: var(--green) !important; }
+
+/* SUMMARY */
+.summary-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr));
+  gap: 10px; margin-bottom: 14px;
+}
+.s-tile {
+  border-radius: var(--radius-sm); padding: 12px 14px;
+  border: 1.5px solid var(--border); background: var(--surface2);
+}
+.s-tile-label { font-size: 0.68rem; color: var(--fg3); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 5px; }
+.s-tile-val   { font-size: 1.05rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--fg); margin-bottom: 2px; }
+.s-tile-sub   { font-size: 0.72rem; color: var(--fg3); }
+.insight-box {
+  border-radius: var(--radius-sm); padding: 13px 15px;
+  background: var(--accent-light); border-left: 3px solid var(--accent);
+  font-size: 0.85rem; color: var(--fg); line-height: 1.65;
+}
+.insight-box strong { color: var(--accent); }
+
+/* BUCKET */
+.buckets {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(155px,1fr)); gap: 12px;
+}
+.bucket { border-radius: var(--radius-sm); padding: 14px 16px; border: 1.5px solid var(--border); }
+.bucket-num { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 5px; }
+.bucket-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 3px; }
+.bucket-pct   { font-size: 0.78rem; color: var(--fg2); margin-bottom: 8px; }
+.bucket-amount { font-size: 1.1rem; font-weight: 700; font-variant-numeric: tabular-nums; margin-bottom: 5px; }
+.bucket-detail { font-size: 0.75rem; color: var(--fg3); line-height: 1.5; }
+.bucket.b1 { background: var(--amber-light); border-color: var(--amber); }
+.bucket.b1 .bucket-num, .bucket.b1 .bucket-amount { color: var(--amber); }
+.bucket.b2 { background: var(--green-light); border-color: var(--green); }
+.bucket.b2 .bucket-num, .bucket.b2 .bucket-amount { color: var(--green); }
+.bucket.b3 { background: var(--accent-light); border-color: var(--accent); }
+.bucket.b3 .bucket-num, .bucket.b3 .bucket-amount { color: var(--accent); }
+
+/* SUBTITLE */
+.card-subtitle { font-size: 0.78rem; color: var(--fg3); margin-bottom: 16px; }
+
+/* FOOTNOTE */
+.footnote { text-align: center; font-size: 0.75rem; color: var(--fg3); margin-top: 10px; line-height: 1.6; }
+
+/* DIVIDER */
+hr.section-divider { border: none; border-top: 1px solid var(--border); margin: 4px 0 18px; }
+</style>
+
+<div class="page-header">
+  <h1>📊 DCA Portfolio Calculator</h1>
+  <p>ใส่อายุ + จำนวนเงิน → คำนวณพอร์ตลงทุนและการเติบโตถึงเป้าหมาย</p>
+</div>
+
+<!-- === HERO INPUT === -->
+<div class="hero-card">
+  <div class="hero-label">ข้อมูลส่วนตัว</div>
+  <div class="inputs-grid">
+    <div class="field">
+      <label for="currentAge">อายุปัจจุบัน</label>
+      <div class="field-input-wrap">
+        <input type="number" id="currentAge" class="has-suffix" value="45" min="18" max="79" step="1">
+        <span class="field-suffix">ปี</span>
+      </div>
+      <span class="field-hint">อายุ 18–79 ปี</span>
+    </div>
+    <div class="field">
+      <label for="retireAge">อายุเป้าหมาย</label>
+      <div class="field-input-wrap">
+        <input type="number" id="retireAge" class="has-suffix" value="60" min="20" max="80" step="1">
+        <span class="field-suffix">ปี</span>
+      </div>
+      <span class="field-hint" id="yearsLeftHint">DCA อีก 15 ปี</span>
+    </div>
+    <div class="field">
+      <label for="monthlyAmount">ลงทุนต่อเดือน</label>
+      <div class="field-input-wrap">
+        <span class="field-prefix">฿</span>
+        <input type="number" id="monthlyAmount" class="has-prefix" value="20000" min="100" step="500">
+      </div>
+      <div class="quick-btns" style="margin-top:6px">
+        <button class="quick-btn" onclick="setAmount(2000)">2k</button>
+        <button class="quick-btn" onclick="setAmount(5000)">5k</button>
+        <button class="quick-btn" onclick="setAmount(10000)">10k</button>
+        <button class="quick-btn active" onclick="setAmount(20000)">20k</button>
+        <button class="quick-btn" onclick="setAmount(50000)">50k</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT HERO -->
+<div class="result-hero" id="resultHero"></div>
+
+<!-- SLIDERS -->
+<div class="sliders-section">
+  <div class="section-header">
+    <p class="section-title">สัดส่วนการลงทุน</p>
+    <span class="total-badge ok" id="totalPctLabel">รวม 100%</span>
+  </div>
+  <div class="slider-row">
+    <div class="slider-label"><span class="dot dot-sp500"></span>S&amp;P 500</div>
+    <div><input type="range" id="sl-sp500" class="sp500" min="0" max="100" value="35"></div>
+    <input type="number" id="pct-sp500" class="slider-pct-input" value="35" min="0" max="100">
+    <div class="slider-amount" id="amt-sp500"></div>
+  </div>
+  <div class="slider-row">
+    <div class="slider-label"><span class="dot dot-nasdaq"></span>Nasdaq-100</div>
+    <div><input type="range" id="sl-nasdaq" class="nasdaq" min="0" max="100" value="15"></div>
+    <input type="number" id="pct-nasdaq" class="slider-pct-input" value="15" min="0" max="100">
+    <div class="slider-amount" id="amt-nasdaq"></div>
+  </div>
+  <div class="slider-row">
+    <div class="slider-label"><span class="dot dot-thai"></span>หุ้นไทย</div>
+    <div><input type="range" id="sl-thai" class="thai" min="0" max="100" value="20"></div>
+    <input type="number" id="pct-thai" class="slider-pct-input" value="20" min="0" max="100">
+    <div class="slider-amount" id="amt-thai"></div>
+  </div>
+  <div class="slider-row">
+    <div class="slider-label"><span class="dot dot-gold"></span>ทองคำ</div>
+    <div><input type="range" id="sl-gold" class="gold" min="0" max="100" value="20"></div>
+    <input type="number" id="pct-gold" class="slider-pct-input" value="20" min="0" max="100">
+    <div class="slider-amount" id="amt-gold"></div>
+  </div>
+  <div class="slider-row">
+    <div class="slider-label"><span class="dot dot-crypto"></span>Crypto</div>
+    <div><input type="range" id="sl-crypto" class="crypto" min="0" max="100" value="10"></div>
+    <input type="number" id="pct-crypto" class="slider-pct-input" value="10" min="0" max="100">
+    <div class="slider-amount" id="amt-crypto"></div>
+  </div>
+  <button class="reset-btn" onclick="resetDefaults()">↺ รีเซ็ต 35/15/20/20/10</button>
+</div>
+
+<!-- DONUT + BREAKDOWN -->
+<div class="visual-row">
+  <div class="donut-wrap">
+    <svg id="donutSvg" width="172" height="172" viewBox="0 0 172 172" style="overflow:visible"></svg>
+  </div>
+  <div class="breakdown-card">
+    <p class="section-title" style="margin:0 0 12px">รายละเอียดแต่ละสินทรัพย์</p>
+    <div id="assetBlocks"></div>
+  </div>
+</div>
+
+<!-- SCENARIOS -->
+<div class="card">
+  <p class="section-title" style="margin:0 0 4px">ฉากทัศน์เมื่อถึงอายุเป้าหมาย</p>
+  <p class="card-subtitle" id="scenarioSubtitle">DCA ต่อเนื่อง 15 ปี ไม่หยุด • ไม่รวมเงินก้อนตั้งต้น</p>
+  <div class="proj-scenarios" id="projScenarios"></div>
+  <div class="chart-area">
+    <svg class="proj-chart" id="projChart" width="100%" height="230" viewBox="0 0 700 230" preserveAspectRatio="xMidYMid meet"></svg>
+  </div>
+</div>
+
+<!-- YEAR TABLE -->
+<div class="card">
+  <p class="section-title" style="margin:0 0 4px">ผลตอบแทนตามปี</p>
+  <div class="yt-controls">
+    <span class="yt-label">แสดงถึงปีที่</span>
+    <div class="yt-range-wrap">
+      <input type="range" id="ytYears" min="1" max="50" value="15">
+      <span id="ytYearsVal">15 ปี</span>
+    </div>
+    <span class="yt-age-badge" id="ytAgeBadge">อายุ 60</span>
+  </div>
+  <div class="yt-table-wrap">
+    <table class="yt-table">
+      <thead>
+        <tr>
+          <th>ปีที่ / อายุ</th>
+          <th>เงินต้นสะสม</th>
+          <th class="col-bad">แย่ (5%)</th>
+          <th class="col-base">ฐาน (13%)</th>
+          <th class="col-good">ดี (15%)</th>
+          <th>กำไร (ฐาน)</th>
+          <th>ถอน/เดือน</th>
+        </tr>
+      </thead>
+      <tbody id="ytBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- SUMMARY -->
+<div class="card">
+  <p class="section-title" style="margin:0 0 14px">สรุปการคาดการณ์</p>
+  <div class="summary-grid" id="summaryGrid"></div>
+  <div class="insight-box" id="summaryInsight"></div>
+</div>
+
+<!-- BUCKET STRATEGY -->
+<div class="card">
+  <p class="section-title" style="margin:0 0 4px">Bucket Strategy เมื่อถึงอายุเป้าหมาย</p>
+  <p class="card-subtitle" id="bucketSubtitle">แบ่งพอร์ต 3 ถัง รองรับ passive income ยั่งยืน</p>
+  <div class="buckets" id="buckets"></div>
+</div>
+
+<p class="footnote">
+  ตัวเลขเป็นประมาณการเท่านั้น ไม่ใช่คำแนะนำทางการเงิน<br>
+  ผลตอบแทนจริงขึ้นอยู่กับตลาด ค่าธรรมเนียม ภาษี และอัตราเงินเฟ้อ
+</p>
+
+<div class="chart-tooltip" id="chartTooltip">
+  <div class="tt-year" id="tt-year"></div>
+  <div id="tt-rows"></div>
+</div>
+
+<script>
+// === STATE ===
+const ASSETS = [
+  { id:'sp500',  label:'S&P 500',    desc:'TLUS500-UH-X (WealthX)',   cls:'sp500' },
+  { id:'nasdaq', label:'Nasdaq-100', desc:'TLUSNDQ-UH-X (WealthX)',   cls:'nasdaq' },
+  { id:'thai',   label:'หุ้นไทย',   desc:'KTB 50% / KBANK 25% / BDMS 25%', cls:'thai' },
+  { id:'gold',   label:'ทองคำ',     desc:'Gold Feeder Fund (FINNOMENA)', cls:'gold' },
+  { id:'crypto', label:'Crypto',    desc:'BTC 60% / ETH 40% (Bitkub)',   cls:'crypto' },
+];
+const DEFAULTS = { sp500:35, nasdaq:15, thai:20, gold:20, crypto:10 };
+let pcts    = { ...DEFAULTS };
+let monthly = 20000;
+let currentAge = 45;
+let retireAge  = 60;
+let ytYears    = 15;
+
+function yearsLeft() { return Math.max(1, retireAge - currentAge); }
+
+// === FORMAT ===
+function fmt(n) {
+  if (n >= 1e6) return '฿' + (n/1e6).toFixed(2) + 'M';
+  if (n >= 1e3) return '฿' + Math.round(n).toLocaleString('th-TH');
+  return '฿' + Math.round(n);
+}
+function fmtM(n) { return '฿' + (n/1e6).toFixed(2) + 'M'; }
+function fv(pmt, r, n) {
+  if (r === 0) return pmt * n;
+  const rm = r/12;
+  return pmt * ((Math.pow(1+rm, n)-1)/rm);
+}
+
+// === RESULT HERO ===
+function renderHero() {
+  const yrs = yearsLeft();
+  const base = fv(monthly, 0.13, yrs*12);
+  const worst = fv(monthly, 0.05, yrs*12);
+  const best  = fv(monthly, 0.15, yrs*12);
+  const principal = monthly * 12 * yrs;
+  const withdrawal = base * 0.04 / 12;
+  const mult = (base/principal).toFixed(1);
+
+  document.getElementById('resultHero').innerHTML = `
+    <div class="rh-item">
+      <div class="rh-label">DCA ต่อเนื่อง</div>
+      <div class="rh-val">${yrs} ปี</div>
+      <div class="rh-sub">อายุ ${currentAge} → ${retireAge} ปี</div>
+    </div>
+    <div class="rh-item">
+      <div class="rh-label">เงินต้นสะสม</div>
+      <div class="rh-val">${fmtM(principal)}</div>
+      <div class="rh-sub">${monthly.toLocaleString('th-TH')} × ${yrs*12} เดือน</div>
+    </div>
+    <div class="rh-item">
+      <div class="rh-label">พอร์ตฐาน 13%</div>
+      <div class="rh-val">${fmtM(base)}</div>
+      <div class="rh-sub">เงินต้นงอก ${mult}x</div>
+    </div>
+    <div class="rh-item">
+      <div class="rh-label">ถอนได้/เดือน</div>
+      <div class="rh-val">${fmt(withdrawal)}</div>
+      <div class="rh-sub">4% rule · ยั่งยืน</div>
+    </div>
+  `;
+}
+
+// === DONUT ===
+function drawDonut() {
+  const svg = document.getElementById('donutSvg');
+  const cx=86, cy=86, R=70, r=46;
+  const colors = { sp500:'#2563EB', nasdaq:'#7C3AED', thai:'#059669', gold:'#D97706', crypto:'#DC2626' };
+  const isDark = document.documentElement.dataset.theme==='dark' ||
+    (!document.documentElement.dataset.theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const total = Object.values(pcts).reduce((a,b)=>a+b,0);
+  if (!total) { svg.innerHTML=''; return; }
+  let paths='', start=-Math.PI/2;
+  for (const a of ASSETS) {
+    const frac = pcts[a.id]/total, angle=frac*Math.PI*2, end=start+angle;
+    if (!frac) { start=end; continue; }
+    const x1=cx+R*Math.cos(start), y1=cy+R*Math.sin(start);
+    const x2=cx+R*Math.cos(end),   y2=cy+R*Math.sin(end);
+    const x3=cx+r*Math.cos(end),   y3=cy+r*Math.sin(end);
+    const x4=cx+r*Math.cos(start), y4=cy+r*Math.sin(start);
+    const lg=angle>Math.PI?1:0;
+    paths+=`<path d="M${x1} ${y1} A${R} ${R} 0 ${lg} 1 ${x2} ${y2} L${x3} ${y3} A${r} ${r} 0 ${lg} 0 ${x4} ${y4}Z"
+      fill="${colors[a.id]}" stroke="${isDark?'#192030':'#fff'}" stroke-width="2.5"/>`;
+    start=end;
+  }
+  const fg=isDark?'#E6EDF8':'#1B2333', fg3=isDark?'#4E6480':'#8896A8';
+  const amtStr = monthly>=1e6?(monthly/1e6).toFixed(1)+'M':monthly.toLocaleString('th-TH');
+  svg.innerHTML=paths+
+    `<text x="${cx}" y="${cy-9}" text-anchor="middle" font-size="10" fill="${fg3}" font-family="Sarabun,sans-serif">ต่อเดือน</text>
+     <text x="${cx}" y="${cy+13}" text-anchor="middle" font-size="16" font-weight="700" fill="${fg}" font-family="Sarabun,sans-serif" font-variant-numeric="tabular-nums">฿${amtStr}</text>`;
+}
+
+// === BREAKDOWN ===
+function renderBreakdown() {
+  document.getElementById('assetBlocks').innerHTML = ASSETS.map(a => {
+    if (!pcts[a.id]) return '';
+    const amt = Math.round(monthly*pcts[a.id]/100);
+    return `<div class="asset-block ${a.cls}">
+      <div class="asset-name">${a.label} <span style="font-weight:400;color:var(--fg3)">${pcts[a.id]}%</span></div>
+      <div class="asset-desc">${a.desc}</div>
+      <div class="asset-amount ${a.cls}">${fmt(amt)}</div>
+    </div>`;
+  }).join('');
+}
+
+// === SCENARIOS ===
+function renderScenarios() {
+  const yrs = yearsLeft();
+  document.getElementById('scenarioSubtitle').textContent =
+    `DCA ต่อเนื่อง ${yrs} ปี (อายุ ${currentAge}→${retireAge}) ไม่รวมเงินก้อนตั้งต้น`;
+  const scen = [
+    {label:'แย่', rate:0.05, cls:'pessimist'},
+    {label:'ฐาน', rate:0.13, cls:'base'},
+    {label:'ดี',  rate:0.15, cls:'optimist'},
+  ];
+  document.getElementById('projScenarios').innerHTML = scen.map(s => {
+    const val=fv(monthly,s.rate,yrs*12), w=val*0.04/12;
+    return `<div class="scenario-tile ${s.cls}">
+      <div class="scenario-label">${s.label}</div>
+      <div class="scenario-rate">${(s.rate*100).toFixed(0)}%/ปี</div>
+      <div class="scenario-val">${fmtM(val)}</div>
+      <div class="scenario-note">ถอน ${fmt(w)}/เดือน</div>
+    </div>`;
+  }).join('');
+}
+
+// === CHART ===
+function renderChart() {
+  const svg=document.getElementById('projChart');
+  const W=700,H=230,pL=68,pR=20,pT=18,pB=38;
+  const plotW=W-pL-pR, plotH=H-pT-pB;
+  const n=yearsLeft();
+  const isDark = document.documentElement.dataset.theme==='dark' ||
+    (!document.documentElement.dataset.theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+  const rates=[0.05,0.13,0.15];
+  const colors=['#DC2626','#2563EB','#059669'];
+  const lbls=['5%/ปี','13%/ปี','15%/ปี'];
+  const series=rates.map(r=>Array.from({length:n+1},(_,i)=>fv(monthly,r,i*12)));
+  const maxVal=Math.max(...series.flat())*1.06;
+  const xScale=i=>pL+(i/n)*plotW;
+  const yScale=v=>pT+plotH-(v/maxVal)*plotH;
+
+  const gc=isDark?'#2A3850':'#DDE2EB', lc=isDark?'#4E6480':'#8896A8';
+  let grid='',yLbls='';
+  for(let i=0;i<=5;i++){
+    const v=i*maxVal/5, y=yScale(v);
+    grid+=`<line x1="${pL}" y1="${y}" x2="${W-pR}" y2="${y}" stroke="${gc}" stroke-width="1"/>`;
+    const lbl=v>=1e6?(v/1e6).toFixed(0)+'M':(v/1000).toFixed(0)+'k';
+    yLbls+=`<text x="${pL-7}" y="${y+4}" text-anchor="end" font-size="10" fill="${lc}" font-family="Sarabun,sans-serif">฿${lbl}</text>`;
+  }
+
+  let xLbls='';
+  const step = n<=10?1:n<=20?2:n<=30?3:5;
+  for(let i=0;i<=n;i+=step){
+    const x=xScale(i);
+    xLbls+=`<text x="${x}" y="${H-pB+16}" text-anchor="middle" font-size="10" fill="${lc}" font-family="Sarabun,sans-serif">อายุ ${currentAge+i}</text>`;
+    xLbls+=`<line x1="${x}" y1="${pT}" x2="${x}" y2="${H-pB}" stroke="${gc}" stroke-width="0.5" stroke-dasharray="3,3"/>`;
+  }
+
+  const paths=series.map((data,si)=>{
+    let d='';
+    data.forEach((v,i)=>{ const x=xScale(i),y=yScale(v); d+=i?` L${x} ${y}`:`M${x} ${y}`; });
+    return `<path d="${d}" fill="none" stroke="${colors[si]}" stroke-width="2.5" stroke-linejoin="round"/>`;
+  });
+
+  const legend=lbls.map((l,i)=>
+    `<g transform="translate(${pL+i*120},${H-4})">
+      <rect x="0" y="-7" width="14" height="3" rx="1.5" fill="${colors[i]}"/>
+      <text x="19" y="0" font-size="10" fill="${lc}" font-family="Sarabun,sans-serif">${l}</text>
+    </g>`).join('');
+
+  let hoverZones='';
+  for(let i=0;i<=n;i++){
+    const x=xScale(i), hw=plotW/(n+1);
+    hoverZones+=`<rect class="hz" data-i="${i}" x="${x-hw/2}" y="${pT}" width="${hw}" height="${plotH}" fill="transparent" style="cursor:crosshair"/>`;
+  }
+
+  svg.innerHTML=`${grid}${xLbls}${yLbls}${paths.join('')}${legend}
+    <line id="ch" x1="0" y1="${pT}" x2="0" y2="${H-pB}" stroke="${lc}" stroke-width="1" stroke-dasharray="4,3" opacity="0"/>
+    ${series.map((data,si)=>data.map((v,i)=>`<circle id="dp-${si}-${i}" cx="${xScale(i)}" cy="${yScale(v)}" r="4" fill="${colors[si]}" stroke="${isDark?'#192030':'#fff'}" stroke-width="2" opacity="0"/>`).join('')).join('')}
+    ${hoverZones}`;
+
+  const tip=document.getElementById('chartTooltip');
+  const ch=svg.getElementById('ch');
+  svg.querySelectorAll('.hz').forEach(z=>{
+    z.addEventListener('mouseenter',()=>{
+      const i=parseInt(z.dataset.i), x=xScale(i);
+      ch.setAttribute('x1',x); ch.setAttribute('x2',x); ch.setAttribute('opacity','1');
+      series.forEach((_,si)=>svg.getElementById(`dp-${si}-${i}`)?.setAttribute('opacity','1'));
+      document.getElementById('tt-year').textContent=`อายุ ${currentAge+i} (ปีที่ ${i})`;
+      document.getElementById('tt-rows').innerHTML=series.map((d,si)=>
+        `<div class="tt-row"><span class="tt-label">${lbls[si]}</span><span class="tt-val" style="color:${colors[si]}">${fmtM(d[i])}</span></div>`
+      ).join('');
+      tip.classList.add('visible');
+    });
+    z.addEventListener('mousemove',e=>{
+      let tx=e.clientX+14,ty=e.clientY-60;
+      if(tx+230>window.innerWidth)tx=e.clientX-240;
+      tip.style.left=tx+'px'; tip.style.top=ty+'px';
+    });
+    z.addEventListener('mouseleave',()=>{
+      const i=parseInt(z.dataset.i);
+      ch.setAttribute('opacity','0');
+      series.forEach((_,si)=>svg.getElementById(`dp-${si}-${i}`)?.setAttribute('opacity','0'));
+      tip.classList.remove('visible');
+    });
+  });
+}
+
+// === YEAR TABLE ===
+function renderYearTable() {
+  const rates=[0.05,0.13,0.15];
+  const step=ytYears>25?5:ytYears>15?2:1;
+  let rows='';
+  for(let yr=1;yr<=ytYears;yr++){
+    if(yr%step!==0&&yr!==ytYears) continue;
+    const age=currentAge+yr;
+    const principal=monthly*12*yr;
+    const vals=rates.map(r=>fv(monthly,r,yr*12));
+    const profit=vals[1]-principal;
+    const w=vals[1]*0.04/12;
+    const isLast=yr===ytYears;
+    rows+=`<tr class="${isLast?'hl-row':''}">
+      <td>ปีที่ ${yr} · อายุ ${age}</td>
+      <td>${fmt(principal)}</td>
+      <td class="col-bad">${fmtM(vals[0])}</td>
+      <td class="col-base">${fmtM(vals[1])}</td>
+      <td class="col-good">${fmtM(vals[2])}</td>
+      <td style="color:var(--green)">+${fmt(profit)} <span style="font-size:.7rem;color:var(--fg3)">(+${(profit/principal*100).toFixed(0)}%)</span></td>
+      <td class="col-base">${fmt(w)}</td>
+    </tr>`;
+  }
+  document.getElementById('ytBody').innerHTML=rows;
+}
+
+// === SUMMARY ===
+function renderSummary() {
+  const yrs=ytYears, age=currentAge+yrs;
+  const principal=monthly*12*yrs;
+  const base=fv(monthly,0.13,yrs*12);
+  const worst=fv(monthly,0.05,yrs*12);
+  const best =fv(monthly,0.15,yrs*12);
+  const profit=base-principal;
+  const mult=(base/principal).toFixed(1);
+  const w=base*0.04/12;
+
+  document.getElementById('summaryGrid').innerHTML=`
+    <div class="s-tile">
+      <div class="s-tile-label">เงินที่ใส่เข้าไป</div>
+      <div class="s-tile-val">${fmtM(principal)}</div>
+      <div class="s-tile-sub">${monthly.toLocaleString('th-TH')} × ${yrs*12} เดือน</div>
+    </div>
+    <div class="s-tile">
+      <div class="s-tile-label">พอร์ตฐาน (13%)</div>
+      <div class="s-tile-val" style="color:var(--accent)">${fmtM(base)}</div>
+      <div class="s-tile-sub">เงินต้นงอก ${mult}x</div>
+    </div>
+    <div class="s-tile">
+      <div class="s-tile-label">กำไรสุทธิ</div>
+      <div class="s-tile-val" style="color:var(--green)">+${fmtM(profit)}</div>
+      <div class="s-tile-sub">+${(profit/principal*100).toFixed(0)}% จากต้นทุน</div>
+    </div>
+    <div class="s-tile">
+      <div class="s-tile-label">ถอนได้/เดือน</div>
+      <div class="s-tile-val" style="color:var(--accent)">${fmt(w)}</div>
+      <div class="s-tile-sub">4% rule ที่อายุ ${age}</div>
+    </div>
+    <div class="s-tile">
+      <div class="s-tile-label">กรณีแย่ (5%)</div>
+      <div class="s-tile-val" style="color:var(--red)">${fmtM(worst)}</div>
+      <div class="s-tile-sub">ถอน ${fmt(worst*0.04/12)}/เดือน</div>
+    </div>
+    <div class="s-tile">
+      <div class="s-tile-label">กรณีดี (15%)</div>
+      <div class="s-tile-val" style="color:var(--green)">${fmtM(best)}</div>
+      <div class="s-tile-sub">ถอน ${fmt(best*0.04/12)}/เดือน</div>
+    </div>
+  `;
+
+  // Insight
+  let msg=`DCA <strong>${monthly.toLocaleString('th-TH')} บาท/เดือน</strong> จากอายุ <strong>${currentAge}</strong> ถึง <strong>${age} ปี</strong> (${yrs} ปี) — `;
+  if(yrs<5) msg+=`ระยะนี้ทบต้นยังน้อย เน้นสร้างวินัย DCA ต่อเนื่องก่อน`;
+  else if(yrs<10) msg+=`เริ่มเห็นพลังทบต้น เงินต้น ${fmtM(principal)} → <strong>${fmtM(base)}</strong> (${mult}x)`;
+  else if(yrs<20) msg+=`พลังทบต้นชัดเจน เงินต้น ${fmtM(principal)} → <strong>${fmtM(base)}</strong> (${mult}x) ถอน passive income <strong>${fmt(w)}/เดือน</strong>`;
+  else msg+=`ทบต้น ${yrs} ปียาวนาน เงินต้น ${fmtM(principal)} กลายเป็น <strong>${fmtM(base)}</strong> (${mult}x) — <strong>${fmt(w)}/เดือน</strong> ตลอดชีวิต`;
+  document.getElementById('summaryInsight').innerHTML=msg;
+}
+
+// === BUCKETS ===
+function renderBuckets() {
+  const yrs=yearsLeft();
+  const base=fv(monthly,0.13,yrs*12);
+  const w=base*0.04/12;
+  const b1=base*0.15, b2=base*0.26, b3=base*0.59;
+  document.getElementById('bucketSubtitle').textContent=
+    `พอร์ตฐาน 13% ≈ ${fmtM(base)} → passive income ${fmt(w)}/เดือน (4% rule)`;
+  document.getElementById('buckets').innerHTML=`
+    <div class="bucket b1">
+      <div class="bucket-num">Bucket 1 · สด</div>
+      <div class="bucket-title">🏦 พร้อมใช้</div>
+      <div class="bucket-pct">15% — ${fmtM(b1)}</div>
+      <div class="bucket-amount">${fmt(w*12*4)} สำรอง 4 ปี</div>
+      <div class="bucket-detail">เงินฝาก / กองทุนตลาดเงิน<br>ใช้จ่ายจากถังนี้ก่อนเสมอ</div>
+    </div>
+    <div class="bucket b2">
+      <div class="bucket-num">Bucket 2 · กลาง</div>
+      <div class="bucket-title">🏅 สร้างรายได้</div>
+      <div class="bucket-pct">26% — ${fmtM(b2)}</div>
+      <div class="bucket-amount">เติม B1 ทุก ~4 ปี</div>
+      <div class="bucket-detail">พันธบัตร / ทองคำ<br>ความผันผวนต่ำ</div>
+    </div>
+    <div class="bucket b3">
+      <div class="bucket-num">Bucket 3 · ยาว</div>
+      <div class="bucket-title">📈 เติบโต</div>
+      <div class="bucket-pct">59% — ${fmtM(b3)}</div>
+      <div class="bucket-amount">อย่าขายตอนลง</div>
+      <div class="bucket-detail">S&P 500 / หุ้นไทย<br>ทบต้นต่อไปเรื่อยๆ</div>
+    </div>
+  `;
+}
+
+// === UPDATE AGES ===
+function updateAgeDisplay() {
+  const yrs = yearsLeft();
+  document.getElementById('yearsLeftHint').textContent = `DCA อีก ${yrs} ปี`;
+  // sync ytYears slider max to total life span (age 20-90 range)
+  const maxYrs = Math.min(50, 90 - currentAge);
+  const ytSlider = document.getElementById('ytYears');
+  ytSlider.max = maxYrs;
+  if (ytYears > maxYrs) ytYears = maxYrs;
+  // default ytYears to yearsLeft
+  ytYears = Math.min(ytYears, maxYrs);
+  ytSlider.value = ytYears;
+  document.getElementById('ytYearsVal').textContent = `${ytYears} ปี`;
+  document.getElementById('ytAgeBadge').textContent = `อายุ ${currentAge + ytYears}`;
+}
+
+// === MAIN UPDATE ===
+function updateAll() {
+  updateAgeDisplay();
+  // slider amounts
+  ASSETS.forEach(a => {
+    const amt = Math.round(monthly * pcts[a.id] / 100);
+    document.getElementById(`amt-${a.id}`).textContent = fmt(amt);
+    const sl = document.getElementById(`sl-${a.id}`);
+    sl.style.setProperty('--pct', pcts[a.id]+'%');
+  });
+  const total = Object.values(pcts).reduce((a,b)=>a+b,0);
+  const lbl = document.getElementById('totalPctLabel');
+  lbl.textContent = `รวม ${total}%`;
+  lbl.className = 'total-badge '+(total===100?'ok':total>100?'over':'under');
+
+  renderHero();
+  drawDonut();
+  renderBreakdown();
+  renderScenarios();
+  renderChart();
+  renderYearTable();
+  renderSummary();
+  renderBuckets();
+}
+
+// === BIND INPUTS ===
+document.getElementById('currentAge').addEventListener('input', e => {
+  let v = parseInt(e.target.value)||18;
+  v = Math.max(18, Math.min(79, v));
+  currentAge = v;
+  if (retireAge <= currentAge) { retireAge = currentAge+1; document.getElementById('retireAge').value=retireAge; }
+  updateAll();
+});
+document.getElementById('retireAge').addEventListener('input', e => {
+  let v = parseInt(e.target.value)||20;
+  v = Math.max(20, Math.min(80, v));
+  retireAge = v;
+  if (retireAge <= currentAge) { currentAge = retireAge-1; document.getElementById('currentAge').value=currentAge; }
+  updateAll();
+});
+document.getElementById('monthlyAmount').addEventListener('input', e => {
+  monthly = parseInt(e.target.value)||0;
+  document.querySelectorAll('.quick-btn').forEach(b=>b.classList.remove('active'));
+  updateAll();
+});
+function setAmount(val) {
+  monthly=val;
+  document.getElementById('monthlyAmount').value=val;
+  document.querySelectorAll('.quick-btn').forEach(b=>{
+    b.classList.toggle('active', parseInt(b.textContent.replace(/k/,''))*1000===val || parseInt(b.textContent)===val);
+  });
+  updateAll();
+}
+function resetDefaults() {
+  pcts={...DEFAULTS};
+  ASSETS.forEach(a=>{ document.getElementById(`sl-${a.id}`).value=pcts[a.id]; document.getElementById(`pct-${a.id}`).value=pcts[a.id]; });
+  updateAll();
+}
+
+// Sliders
+ASSETS.forEach(a=>{
+  const sl=document.getElementById(`sl-${a.id}`);
+  const ni=document.getElementById(`pct-${a.id}`);
+  sl.addEventListener('input',()=>{ pcts[a.id]=parseInt(sl.value)||0; ni.value=pcts[a.id]; updateAll(); });
+  ni.addEventListener('input',()=>{ let v=Math.max(0,Math.min(100,parseInt(ni.value)||0)); pcts[a.id]=v; sl.value=v; updateAll(); });
+});
+
+// Year slider
+document.getElementById('ytYears').addEventListener('input', e=>{
+  ytYears=parseInt(e.target.value);
+  document.getElementById('ytYearsVal').textContent=`${ytYears} ปี`;
+  document.getElementById('ytAgeBadge').textContent=`อายุ ${currentAge+ytYears}`;
+  renderYearTable();
+  renderSummary();
+});
+
+// Dark mode
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', ()=>updateAll());
+
+// INIT
+ASSETS.forEach(a=>document.getElementById(`sl-${a.id}`).style.setProperty('--pct',pcts[a.id]+'%'));
+updateAll();
+</script>
